@@ -18,7 +18,6 @@ if ($rawPayload === false) {
 
 $postingId = (string)$params['order_id'];
 
-// 4. SQL
 $sql = "INSERT INTO `Заказ` (Posting_id, raw_payload) VALUES (?, ?)";
 
 $stmt = $connect->prepare($sql);
