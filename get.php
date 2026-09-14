@@ -10,31 +10,32 @@ $params = [
   'seller_id' => 7376,
 ];
 
+function insert_into_db($connect, $params){ 
+    $rawPayload = json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($rawPayload === false) {
+        die('json_encode error: ' . json_last_error_msg());
+    }
 
-$rawPayload = json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-if ($rawPayload === false) {
-    die('json_encode error: ' . json_last_error_msg());
+    $postingId = (string)$params['order_id'];
+
+    $sql = "INSERT INTO `Заказ` (Posting_id, raw_payload) VALUES (?, ?)";
+
+    $stmt = $connect->prepare($sql);
+    if (!$stmt) {
+        die('Prepare failed: ' . $connect->error);
+    }
+
+    $stmt->bind_param('ss', $postingId, $rawPayload);
+
+    if ($stmt->execute()) {
+        echo "OK, insert_id = " . $stmt->insert_id;
+    } else {
+        echo "Execute failed: " . $stmt->error;
+    }
+
+    $stmt->close();
+    $connect->close();
 }
-
-$postingId = (string)$params['order_id'];
-
-$sql = "INSERT INTO `Заказ` (Posting_id, raw_payload) VALUES (?, ?)";
-
-$stmt = $connect->prepare($sql);
-if (!$stmt) {
-    die('Prepare failed: ' . $connect->error);
-}
-
-$stmt->bind_param('ss', $postingId, $rawPayload);
-
-if ($stmt->execute()) {
-    echo "OK, insert_id = " . $stmt->insert_id;
-} else {
-    echo "Execute failed: " . $stmt->error;
-}
-
-$stmt->close();
-$connect->close();
 
 
 ?>
