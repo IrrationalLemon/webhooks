@@ -6,3 +6,5 @@ CREATE TABLE Заказ
     created_at DATETIME DEFAULT NOW(),
     processed_at DATETIME
 )
+
+

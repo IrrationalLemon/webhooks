@@ -7,7 +7,7 @@
     if($connect->connect_error){
         die("Connection failed".$connect->connect_error);
     }
-    echo "Connection Successful";
+    echo "Connection Successful<br>";
 
 
     // Важно для корректной работы с русскими буквами и JSON

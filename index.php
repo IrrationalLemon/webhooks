@@ -30,6 +30,20 @@ function b24_call($queryUrl, $arParams) {
     return json_decode($out, true);
 }
 
+function checkOrderInDatabase($connect, $orderId) {
+    $stmt = $connect->prepare("SELECT id FROM ozon_orders WHERE order_id = ? LIMIT 1");
+    $stmt->bind_param("i", $orderId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($row = $result->fetch_assoc()) {
+        return $row['id'];
+    }
+    
+    return false;
+}
+
+
 $params = [
     'message_type' => 'TYPE_ORDER_NEW',
     'order_number' => '202343234-0022-3',
@@ -39,18 +53,30 @@ $params = [
     'seller_id'    => 7376,
 ];
 
+$orderNumber = $params['order_number'];
+$orderId = $params['order_id'];
+$queryUrl = 'https://b24.unite-it.ru/rest/16374/uwlezd1nbjsj3eyd/crm.deal.add.json';
 
-$insertResult = insert_into_db($connect, $params);
-
-if (is_array($insertResult) && isset($insertResult['error'])) {
-    echo 'Ошибка сохранения в БД: ' . $insertResult['error'];
+try {
+    $insertResult = insert_into_db($connect, $params);
+    
+    if (is_array($insertResult) && isset($insertResult['error'])) {
+        echo 'Ошибка сохранения в БД: ' . $insertResult['error'];
+        exit;
+    }
+    
+    echo "Запись сохранена в БД, insert_id = {$insertResult}<br>";
+    
+} catch (mysqli_sql_exception $e) {
+    // Код 1062 = Duplicate entry
+    if ($e->getCode() == 1062) {
+        echo "Заказ #{$orderId} уже существует (дубликат). Номер заказа {$orderNumber}.<br>";
+        exit;
+    }
+    // Другие ошибки БД
+    echo 'Ошибка БД: ' . $e->getMessage();
     exit;
 }
-
-echo "Запись сохранена, insert_id = {$insertResult}<br>";
-
-$orderNumber = $params['order_number'];
-$queryUrl = 'https://b24.unite-it.ru/rest/16374/uwlezd1nbjsj3eyd/crm.deal.add.json';
 
 $arParams = http_build_query([
     'fields' => [
@@ -61,7 +87,6 @@ $arParams = http_build_query([
     ],
 ]);
 
-$response = b24_call($queryUrl, $arParams);
 
 if (isset($response['error'])) {
     echo 'Ошибка cURL: ' . $response['error'];
